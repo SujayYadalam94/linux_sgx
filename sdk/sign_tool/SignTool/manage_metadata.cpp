@@ -442,6 +442,7 @@ bool CMetadata::update_layout_entries()
     m_rva = calculate_sections_size();
     if(m_rva == 0)
     {
+	SE_TRACE(SE_TRACE_DEBUG,"\n"); //YSSU
         se_trace(SE_TRACE_ERROR, INVALID_ENCLAVE_ERROR);
         return false;
     }
@@ -450,6 +451,13 @@ bool CMetadata::update_layout_entries()
     {
         if(!IS_GROUP_ID(m_layouts[i].entry.id))
         {
+	    if(m_layouts[i].entry.id == LAYOUT_ID_HEAP_MIN) //heap
+	    {
+		//YSSU: Modifying the heap start address to align with large page
+		m_rva += (0x200000 - 1);
+		m_rva &= ~0x1FFFFF;
+		m_rva -= 0x1000; //Accomodating first heap page
+	    }
             m_layouts[i].entry.rva = m_rva;
             m_rva += (((uint64_t)m_layouts[i].entry.page_count) << SE_PAGE_SHIFT);
         }
@@ -472,6 +480,7 @@ bool CMetadata::build_layout_entries()
     layout_t *layout_table = (layout_t *) alloc_buffer_from_metadata(size);
     if(layout_table == NULL)
     {
+	SE_TRACE(SE_TRACE_DEBUG,"\n"); //YSSU
         se_trace(SE_TRACE_ERROR, INVALID_ENCLAVE_ERROR); 
         return false;
     }
@@ -496,6 +505,7 @@ bool CMetadata::build_layout_entries()
         layout_table = (layout_t *)alloc_buffer_from_metadata(sizeof(layout_t));
         if(layout_table == NULL)
         {
+	SE_TRACE(SE_TRACE_DEBUG,"\n"); //YSSU
             se_trace(SE_TRACE_ERROR, INVALID_ENCLAVE_ERROR); 
             return false;
         }
@@ -518,6 +528,7 @@ bool CMetadata::build_layout_table()
     guard_page.entry.page_count = SE_GUARD_PAGE_SIZE >> SE_PAGE_SHIFT;
 
     std::vector<layout_t> thread_layouts;
+
     // heap
     layout.entry.id = LAYOUT_ID_HEAP_MIN;
     layout.entry.page_count = (uint32_t)(m_create_param.heap_min_size >> SE_PAGE_SHIFT);
@@ -578,6 +589,7 @@ bool CMetadata::build_layout_table()
     tcs_t *tcs_template = (tcs_t *) alloc_buffer_from_metadata(TCS_TEMPLATE_SIZE);
     if(tcs_template == NULL)
     {
+	SE_TRACE(SE_TRACE_DEBUG,"\n"); //YSSU
         se_trace(SE_TRACE_ERROR, INVALID_ENCLAVE_ERROR);
         return false;
     }
@@ -701,6 +713,7 @@ bool CMetadata::build_layout_table()
     // tcs template
     if(false == build_tcs_template(tcs_template))
     {
+	SE_TRACE(SE_TRACE_DEBUG,"\n"); //YSSU
         se_trace(SE_TRACE_ERROR, INVALID_ENCLAVE_ERROR); 
         return false;
     }
@@ -712,6 +725,7 @@ bool CMetadata::build_patch_entries(std::vector<patch_entry_t> &patches)
     patch_entry_t *patch_table = (patch_entry_t *) alloc_buffer_from_metadata(size);
     if(patch_table == NULL)
     {
+	SE_TRACE(SE_TRACE_DEBUG,"\n"); //YSSU
         se_trace(SE_TRACE_ERROR, INVALID_ENCLAVE_ERROR); 
         return false;
     }
@@ -743,6 +757,7 @@ bool CMetadata::build_patch_table()
     uint64_t rva = m_parser->get_symbol_rva("g_global_data");
     if(0 == rva)
     {
+	SE_TRACE(SE_TRACE_DEBUG,"\n"); //YSSU
         se_trace(SE_TRACE_ERROR, INVALID_ENCLAVE_ERROR); 
          return false;
     }
@@ -757,6 +772,7 @@ bool CMetadata::build_patch_table()
     uint8_t *zero = (uint8_t *)alloc_buffer_from_metadata(0);  // get addr only, size will be determined later
     if(zero == NULL)
     {
+	SE_TRACE(SE_TRACE_DEBUG,"\n"); //YSSU
         se_trace(SE_TRACE_ERROR, INVALID_ENCLAVE_ERROR); 
         return false;
     }
@@ -822,6 +838,7 @@ bool CMetadata::build_patch_table()
     zero = (uint8_t *)alloc_buffer_from_metadata(size); // alloc buffer again with the accurate size
     if(zero == NULL)
     {
+	SE_TRACE(SE_TRACE_DEBUG,"\n"); //YSSU
         se_trace(SE_TRACE_ERROR, INVALID_ENCLAVE_ERROR); 
         return false;
     }

@@ -1,0 +1,31 @@
+Format: 1.8
+Date: Tue, 09 May 2018 11:47:23 +0300
+Source: libsgx-enclave-common
+Binary: libsgx-enclave-common
+Architecture: source amd64
+Version: 2.3.101.46683-1
+Distribution: unstable
+Urgency: low
+Maintainer: <xiangquan.liu@intel.com>
+Changed-By: TODO <TODO@TODO.com>
+Description:
+ libsgx-enclave-common - SGX Enclave Common Loader
+Changes:
+ libsgx-enclave-common (2.3.101.46683-1) unstable; urgency=low
+ .
+   * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
+Checksums-Sha1:
+ d3968edb85ff812c2c31e81f75779ff8767d96de 1026 libsgx-enclave-common_2.3.101.46683-1.dsc
+ ce67f174b38d1e92ea417fb1fcd08a04851a7d8e 6083521 libsgx-enclave-common_2.3.101.46683.orig.tar.gz
+ d11d3d94b233cb960b3ffd1427c403db9b111f47 22816 libsgx-enclave-common_2.3.101.46683-1.debian.tar.xz
+ da5ae1626c95ac5265d966af6a050ff7a90e06f1 2846266 libsgx-enclave-common_2.3.101.46683-1_amd64.deb
+Checksums-Sha256:
+ 87c60dcfba84e13897b2442f68cd6e1cb83772bb24ac0a52af0d97c94ff7486b 1026 libsgx-enclave-common_2.3.101.46683-1.dsc
+ a93e37f10afd886733dd1e681824b1bb6d498e19c485b83116f0ce75bd6dc4eb 6083521 libsgx-enclave-common_2.3.101.46683.orig.tar.gz
+ a311fef53faa47ddfe82d4e36f8f90548bde496ed496336c904f2a66e4ddf136 22816 libsgx-enclave-common_2.3.101.46683-1.debian.tar.xz
+ 634a1e043da3ae6cd2684ac86f5228a085f1c1c6a3169a4930874885099bf22a 2846266 libsgx-enclave-common_2.3.101.46683-1_amd64.deb
+Files:
+ 0ab1f260fe61e7221d33d30b11510408 1026 libs optional libsgx-enclave-common_2.3.101.46683-1.dsc
+ 656b426ac7f8e3cbe1890e46ba521bad 6083521 libs optional libsgx-enclave-common_2.3.101.46683.orig.tar.gz
+ 7a6b30d6f980130097b0aadb7bc9a021 22816 libs optional libsgx-enclave-common_2.3.101.46683-1.debian.tar.xz
+ 69f243aac4384345b042f9a5c76b8393 2846266 libs optional libsgx-enclave-common_2.3.101.46683-1_amd64.deb

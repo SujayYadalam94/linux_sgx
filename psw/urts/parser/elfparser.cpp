@@ -422,7 +422,10 @@ bool validate_segment(const ElfW(Ehdr) *elf_hdr, uint64_t len)
     {
         /* Validate the size of the buffer */
         if (len < (uint64_t)prg_hdr->p_offset + prg_hdr->p_filesz)
-            return false;
+//        if (prg_hdr->p_filesz != 0 && len < (uint64_t)prg_hdr->p_offset + prg_hdr->p_filesz) //YSSU
+	{
+                return false;
+	}
 
         if (PT_LOAD == prg_hdr->p_type)
         {
@@ -595,46 +598,69 @@ sgx_status_t ElfParser::run_parser()
     /* We only need to run the parser once. */
     if (m_sections.size() != 0) return SGX_SUCCESS;
 
+	printf("1\n"); //YSSU
     const ElfW(Ehdr) *elf_hdr = (const ElfW(Ehdr) *)m_start_addr;
     if (elf_hdr == NULL || m_len < sizeof(ElfW(Ehdr)))
+{
+	printf("2\n"); //YSSU
         return SGX_ERROR_INVALID_ENCLAVE;
+}
 
     /* Check elf header*/
     if (!validate_elf_header(elf_hdr))
+{
+	printf("3\n"); //YSSU
         return SGX_ERROR_INVALID_ENCLAVE;
-
+}
     /* Get and check machine mode */
     if (!get_bin_fmt(elf_hdr, m_bin_fmt))
-        return SGX_ERROR_MODE_INCOMPATIBLE;
-
+{
+	printf("4\n"); //YSSU
+	return SGX_ERROR_MODE_INCOMPATIBLE;
+}
     /* Check if there is any overlap segment, and make sure the segment is 1 page aligned;
     * TLS segment must exist.
     */
     if (!validate_segment(elf_hdr, m_len))
+    {	
+	printf("5\n"); //YSSU
         return SGX_ERROR_INVALID_ENCLAVE;
+    }
 
     if (!parse_dyn(elf_hdr, &m_dyn_info[0]))
+{
+	printf("6\n"); //YSSU
         return SGX_ERROR_INVALID_ENCLAVE;
-
+}
     /* Check if there is any undefined symbol */
     if (!check_symbol_table(elf_hdr, m_dyn_info, m_sym_table))
-    {
+{
+	printf("7\n"); //YSSU
         return SGX_ERROR_UNDEFINED_SYMBOL;
-    }
+}
 
     /* Check if there is unexpected relocation type */
     if (!validate_reltabs(elf_hdr, m_dyn_info))
+{
+	printf("8\n"); //YSSU
         return SGX_ERROR_INVALID_ENCLAVE;
+}
 
     /* Check if there is .ctor section */
     if (has_ctor_section(elf_hdr))
-        return SGX_ERROR_INVALID_ENCLAVE;
+{
+	printf("9\n"); //YSSU
+       return SGX_ERROR_INVALID_ENCLAVE;
+}
 
     /* build regular sections */
     if (build_regular_sections(m_start_addr, m_sections, m_tls_section, m_metadata_offset, m_metadata_block_size))
         return SGX_SUCCESS;
     else
+{
+	printf("01\n"); //YSSU
         return SGX_ERROR_INVALID_ENCLAVE;
+}
 }
 
 ElfParser::~ElfParser()

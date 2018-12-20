@@ -125,17 +125,36 @@ int CLoader::build_mem_region(const section_info_t &sec_info)
     sec_info_t sinfo;
     memset(&sinfo, 0, sizeof(sinfo));
 
+    printf("%s: addr=0x%lx  raw_data_size=%lu\n", __func__, sec_info.rva, sec_info.raw_data_size); //YSSU
     // Build pages of the section that are contain initialized data.  Each page
     // needs to be added individually as the page may hold relocation data, in
     // which case the page needs to be marked writable.
     while(offset < sec_info.raw_data_size)
     {
+#ifdef USE_TEXT_LARGE_PAGE
+	if(sec_info.raw_data_size >= LARGE_PAGE_SIZE) //YSSU
+	{
+	    printf("%s: Requesting large page \n", __func__);
+            uint64_t rva = sec_info.rva + offset;
+            uint64_t size = LARGE_PAGE_SIZE;
+            sinfo.flags = sec_info.flag;
+
+            ret = build_pages(rva, size, sec_info.raw_data + offset, sinfo, ADD_EXTEND_PAGE);
+            if(SGX_SUCCESS != ret)
+       		return ret;
+
+            // only the first time that rva may be not page aligned
+            offset += size;
+	    continue;
+	}
+#endif
         uint64_t rva = sec_info.rva + offset;
         uint64_t size = MIN((SE_PAGE_SIZE - PAGE_OFFSET(rva)), (sec_info.raw_data_size - offset));
         sinfo.flags = sec_info.flag;
 
         if(is_relocation_page(rva, sec_info.bitmap) && !(sec_info.flag & SI_FLAG_W))
         {
+	    printf("%s: RELOCATION_PAGE!\n", __func__); //YSSU
             sinfo.flags = sec_info.flag | SI_FLAG_W;
             assert(g_enclave_creator != NULL);
             if(g_enclave_creator->use_se_hw() == true)
@@ -152,7 +171,10 @@ int CLoader::build_mem_region(const section_info_t &sec_info)
         }
 
         if (size == SE_PAGE_SIZE)
+	{
+	    printf("Build pages 3\n"); //YSSU
             ret = build_pages(rva, size, sec_info.raw_data + offset, sinfo, ADD_EXTEND_PAGE);
+	}
         else
             ret = build_partial_page(rva, size, sec_info.raw_data + offset, sinfo, ADD_EXTEND_PAGE);
         if(SGX_SUCCESS != ret)
@@ -174,6 +196,7 @@ int CLoader::build_mem_region(const section_info_t &sec_info)
         size_t size = (size_t)(ROUND_TO_PAGE(sec_info.virtual_size - offset));
 
         sinfo.flags = sec_info.flag;
+	    printf("Build pages 4\n"); //YSSU
         if(SGX_SUCCESS != (ret = build_pages(rva, size, 0, sinfo, ADD_EXTEND_PAGE)))
             return ret;
     }
@@ -190,9 +213,6 @@ int CLoader::build_sections(std::vector<uint8_t> *bitmap)
 
     for(unsigned int i = 0; i < sections.size() ; i++)
     {
-        
-        
-        
         if((META_DATA_MAKE_VERSION(SGX_1_5_MAJOR_VERSION,SGX_1_5_MINOR_VERSION ) == m_metadata->version) &&
             (last_section != NULL) &&
            (ROUND_TO_PAGE(last_section->virtual_size() + last_section->get_rva()) < ROUND_TO_PAGE(ROUND_TO_PAGE(last_section->virtual_size()) + last_section->get_rva())) &&
@@ -203,6 +223,7 @@ int CLoader::build_sections(std::vector<uint8_t> *bitmap)
             memset(&sinfo, 0, sizeof(sinfo));
             sinfo.flags = last_section->get_si_flags();
             uint64_t rva = ROUND_TO_PAGE(last_section->get_rva() + last_section->virtual_size());
+	    printf("Build pages 1\n"); //YSSU
             if(SGX_SUCCESS != (ret = build_pages(rva, size, 0, sinfo, ADD_EXTEND_PAGE)))
                 return ret;
         }
@@ -230,6 +251,7 @@ int CLoader::build_sections(std::vector<uint8_t> *bitmap)
         memset(&sinfo, 0, sizeof(sinfo));
         sinfo.flags = last_section->get_si_flags();
         uint64_t rva = ROUND_TO_PAGE(last_section->get_rva() + last_section->virtual_size());
+	printf("Build pages 2\n"); //YSSU
         if(SGX_SUCCESS != (ret = build_pages(rva, size, 0, sinfo, ADD_EXTEND_PAGE)))
             return ret;
     }
@@ -261,21 +283,36 @@ int CLoader::build_pages(const uint64_t start_rva, const uint64_t size, const vo
     int ret = SGX_SUCCESS;
     uint64_t offset = 0;
     uint64_t rva = start_rva;
+    uint32_t data_properties = (uint32_t)(sinfo.flags); //YSSU
 
     assert(IS_PAGE_ALIGNED(start_rva) && IS_PAGE_ALIGNED(size));
-
+    
+    printf("addr=0x%lx, size=%ld, flags=0x%x\n", (unsigned long)ENCLAVE_ID_IOCTL+start_rva, size, data_properties); //YSSU
     while(offset < size)
     {
-        //call driver to add page;
-        if(SGX_SUCCESS != (ret = get_enclave_creator()->add_enclave_page(ENCLAVE_ID_IOCTL, GET_PTR(void, source, 0), rva, sinfo, attr)))
-        {
+	//YSSU
+#ifdef USE_LARGE_PAGE
+	if(((size - offset) >= LARGE_PAGE_SIZE) && !((ENCLAVE_ID_IOCTL+rva) & 0x1FFFFF))
+	{
+		printf("Can call large page \n");
+	      	if(SGX_SUCCESS != (ret = get_enclave_creator()->add_enclave_large_page(ENCLAVE_ID_IOCTL, GET_PTR(void, source, 0), rva, sinfo, attr)))
+		    return ret;
+		offset += LARGE_PAGE_SIZE;	
+		rva += LARGE_PAGE_SIZE;
+	}
+	else
+	{
+#endif
+		 if(SGX_SUCCESS != (ret = get_enclave_creator()->add_enclave_page(ENCLAVE_ID_IOCTL, GET_PTR(void, source, 0), rva, sinfo, attr)))
             //if add page failed , we should remove enclave somewhere;
-            return ret;
-        }
-        offset += SE_PAGE_SIZE;
-        rva += SE_PAGE_SIZE;
+	            return ret;
+        	offset += SE_PAGE_SIZE;
+	        rva += SE_PAGE_SIZE;
+#ifdef USE_LARGE_PAGE
+	}
+#endif
     }
-
+    
     return SGX_SUCCESS;
 }
 
@@ -347,9 +384,6 @@ int CLoader::build_context(const uint64_t start_rva, layout_entry_t *layout)
     memset(&sinfo, 0, sizeof(sinfo));
     uint64_t rva = start_rva + layout->rva;
     //uint64_t start_addr = (uint64_t)get_start_addr();
-
-
-
     assert(IS_PAGE_ALIGNED(rva));
 
     if (layout->attributes & PAGE_ATTR_EADD)
@@ -403,7 +437,6 @@ int CLoader::build_context(const uint64_t start_rva, layout_entry_t *layout)
                 }
                 source = added_page;
             }
-            
             if(SGX_SUCCESS != (ret = build_pages(rva, ((uint64_t)layout->page_count) << SE_PAGE_SHIFT, source, sinfo, layout->attributes)))
             {
                 return ret;
@@ -475,7 +508,7 @@ int CLoader::build_image(SGXLaunchToken * const lc, sgx_attributes_t * const sec
 {
     int ret = SGX_SUCCESS;
 
-
+    SE_TRACE(SE_TRACE_DEBUG, "Build secs:\n"); //YSSU
     if(SGX_SUCCESS != (ret = build_secs(secs_attr, misc_attr)))
     {
         SE_TRACE(SE_TRACE_WARNING, "build secs failed\n");
@@ -498,6 +531,7 @@ int CLoader::build_image(SGXLaunchToken * const lc, sgx_attributes_t * const sec
         memcpy_s(GET_PTR(void, m_parser.get_start_addr(), patch->dst), patch->size, GET_PTR(void, m_metadata, patch->src), patch->size);
     }
 
+    SE_TRACE(SE_TRACE_DEBUG, "Build sections:\n"); //YSSU
     //build sections, copy export function table as well;
     if(SGX_SUCCESS != (ret = build_sections(&bitmap)))
     {
@@ -505,6 +539,7 @@ int CLoader::build_image(SGXLaunchToken * const lc, sgx_attributes_t * const sec
         goto fail;
     }
 
+    SE_TRACE(SE_TRACE_DEBUG, "Build heap/thread contexts:\n"); //YSSU
     // build heap/thread context
     if (SGX_SUCCESS != (ret = build_contexts(GET_PTR(layout_t, m_metadata, m_metadata->dirs[DIR_LAYOUT].offset), 
                                       GET_PTR(layout_t, m_metadata, m_metadata->dirs[DIR_LAYOUT].offset + m_metadata->dirs[DIR_LAYOUT].size),

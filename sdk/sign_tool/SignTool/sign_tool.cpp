@@ -171,6 +171,7 @@ static bool measure_enclave(uint8_t *hash, const char *dllpath, const xml_parame
     sgx_status_t status = parser->run_parser();
     if (status != SGX_SUCCESS)
     {
+	SE_TRACE(SE_TRACE_DEBUG,"\n"); //YSSU
         se_trace(SE_TRACE_ERROR, INVALID_ENCLAVE_ERROR);
         close_handle(fh);
         return false;
@@ -227,6 +228,7 @@ static bool measure_enclave(uint8_t *hash, const char *dllpath, const xml_parame
         res = false;
         break;
     case SGX_ERROR_INVALID_ENCLAVE:
+	SE_TRACE(SE_TRACE_DEBUG,"\n"); //YSSU
         se_trace(SE_TRACE_ERROR, INVALID_ENCLAVE_ERROR);
         res = false;
         break;
@@ -975,6 +977,7 @@ static bool dump_enclave_metadata(const char *enclave_path, const char *dumpfile
     sgx_status_t status = parser->run_parser();
     if (status != SGX_SUCCESS)
     {
+	SE_TRACE(SE_TRACE_DEBUG,"\n"); //YSSU
         se_trace(SE_TRACE_ERROR, INVALID_ENCLAVE_ERROR);
         close_handle(fh);
         return false;

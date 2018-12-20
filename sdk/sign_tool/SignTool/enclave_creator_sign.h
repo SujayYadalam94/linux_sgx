@@ -47,6 +47,7 @@ public:
     virtual ~EnclaveCreatorST();
     int create_enclave(secs_t *secs, sgx_enclave_id_t *enclave_id, void **start_addr, bool ae);
     int add_enclave_page(sgx_enclave_id_t enclave_id, void *source, uint64_t offset, const sec_info_t &sinfo, uint32_t attr);
+    int add_enclave_large_page(sgx_enclave_id_t enclave_id, void *source, uint64_t offset, const sec_info_t &sinfo, uint32_t attr); //YSSU
     int init_enclave(sgx_enclave_id_t enclave_id, enclave_css_t *enclave_css, SGXLaunchToken *lc, le_prd_css_file_t *prd_css_file);
     int get_misc_attr(sgx_misc_attribute_t *sgx_misc_attr, metadata_t *metadata, SGXLaunchToken * const lc, uint32_t flag);
     bool get_plat_cap(sgx_misc_attribute_t *se_attr);

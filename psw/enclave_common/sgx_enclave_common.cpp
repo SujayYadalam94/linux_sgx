@@ -282,16 +282,46 @@ extern "C" size_t COMM_API enclave_load_data(
     if (sec_info.flags & ENCLAVE_PAGE_UNVALIDATED)
         sec_info.flags ^= ENCLAVE_PAGE_UNVALIDATED;
 
+    //YSSU
+    if((data_properties & ENCLAVE_PAGE_LARGE) == ENCLAVE_PAGE_LARGE)
+    {
+ 	printf("Large page requested.\n");
+	sec_info.flags &= ~ENCLAVE_PAGE_LARGE; //YSSU: validate secinfo will fail otherwise
+
+        struct sgx_enclave_add_page addp;
+        addp.addr = POINTER_TO_U64((uint8_t*)target_address);
+        addp.src = POINTER_TO_U64(source);
+        addp.secinfo = POINTER_TO_U64(&sec_info);
+	addp.mrmask = 0;
+        if (!(data_properties & ENCLAVE_PAGE_UNVALIDATED))
+            addp.mrmask |= 0xFFFF;
+	addp.large_page = 1; //YSSU
+        
+	int ret = ioctl(s_hdevice, SGX_IOC_ENCLAVE_ADD_PAGE, &addp);
+	if (ret) {
+            SE_TRACE(SE_TRACE_WARNING, "\nAdd Page - %p to %p... FAIL\n", source, target_address);
+            if (source_buffer == NULL && source != NULL)
+                free(source);
+
+            if (enclave_error != NULL)
+                *enclave_error = error_driver2api(ret);
+            return SE_PAGE_SIZE * 512;
+        }
+    }
+    else
+    {
     size_t pages = target_size / SE_PAGE_SIZE;
     for (size_t i = 0; i < pages; i++) {
-        struct sgx_enclave_add_page addp = { 0, 0, 0, 0 };
+        struct sgx_enclave_add_page addp;// = { 0, 0, 0, 0, 0 }; //YSSU
         addp.addr = POINTER_TO_U64((uint8_t*)target_address + SE_PAGE_SIZE * i);
         addp.src = POINTER_TO_U64(source + SE_PAGE_SIZE * i);
         addp.secinfo = POINTER_TO_U64(&sec_info);
+	addp.mrmask = 0;
         if (!(data_properties & ENCLAVE_PAGE_UNVALIDATED))
             addp.mrmask |= 0xFFFF;
-
-        int ret = ioctl(s_hdevice, SGX_IOC_ENCLAVE_ADD_PAGE, &addp);
+	addp.large_page = 0; //YSSU
+        
+	int ret = ioctl(s_hdevice, SGX_IOC_ENCLAVE_ADD_PAGE, &addp);
         if (ret) {
             SE_TRACE(SE_TRACE_WARNING, "\nAdd Page - %p to %p... FAIL\n", source, target_address);
             if (source_buffer == NULL && source != NULL)
@@ -301,6 +331,7 @@ extern "C" size_t COMM_API enclave_load_data(
                 *enclave_error = error_driver2api(ret);
             return SE_PAGE_SIZE * i;
         }
+    }
     }
 
     if (source_buffer == NULL && source != NULL)

@@ -193,11 +193,30 @@ int EnclaveCreatorHW::add_enclave_page(sgx_enclave_id_t enclave_id, void *src, u
 
     uint32_t enclave_error = ENCLAVE_ERROR_SUCCESS;
     uint32_t data_properties = (uint32_t)(sinfo.flags);
+
     if(!((1<<DoEEXTEND) & attr))
     {
         data_properties |= ENCLAVE_PAGE_UNVALIDATED;
     }
     enclave_load_data((void*)(enclave_id + rva), SE_PAGE_SIZE, src, data_properties, &enclave_error);
+
+    return error_api2urts(enclave_error);
+}
+
+//YSSU
+int EnclaveCreatorHW::add_enclave_large_page(sgx_enclave_id_t enclave_id, void *src, uint64_t rva, const sec_info_t &sinfo, uint32_t attr)
+{
+    assert((rva & ((1<<SE_PAGE_SHIFT)-1)) == 0);
+    UNUSED(attr);
+
+    uint32_t enclave_error = ENCLAVE_ERROR_SUCCESS;
+    uint32_t data_properties = (uint32_t)(sinfo.flags);
+
+    if(!((1<<DoEEXTEND) & attr))
+    {
+        data_properties |= ENCLAVE_PAGE_UNVALIDATED;
+    }
+    enclave_load_data((void*)(enclave_id + rva), LARGE_PAGE_SIZE, src, data_properties | ENCLAVE_PAGE_LARGE, &enclave_error);
 
     return error_api2urts(enclave_error);
 }

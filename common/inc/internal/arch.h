@@ -41,6 +41,10 @@
 
 #define SE_PAGE_SIZE 0x1000
 #define TCS_SIZE SE_PAGE_SIZE
+#define LARGE_PAGE_SIZE 512*SE_PAGE_SIZE //YSSU
+
+#define USE_LARGE_PAGE //YSSU
+//#define USE_TEXT_LARGE_PAGE //YSSU
 
 #pragma pack(push, 1)
 

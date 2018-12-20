@@ -284,7 +284,9 @@ static int __create_enclave(BinParser &parser,
             isVTuneProfiling = false;
 
         bool is_SGX_DBG_OPTIN_set = false;
-        is_SGX_DBG_OPTIN_set = is_SGX_DBG_OPTIN_variable_set();
+        is_SGX_DBG_OPTIN_set = is_SGX_DBG_OPTIN_variable_set(); //YSSU
+	is_SGX_DBG_OPTIN_set = true; //YSSU: debug option
+	SE_TRACE(SE_TRACE_DEBUG, "Debug OPTIN set\n"); //YSSU
         if (isVTuneProfiling || is_SGX_DBG_OPTIN_set)
         {
             SE_TRACE(SE_TRACE_DEBUG, "VTune is profiling or SGX_DBG_OPTIN is set\n");
@@ -435,7 +437,6 @@ sgx_status_t _create_enclave_ex(const bool debug, se_file_handle_t pfile, se_fil
     metadata_t *metadata = NULL;
     SGXLaunchToken *lc = NULL;
     memset(&sgx_misc_attr, 0, sizeof(sgx_misc_attribute_t));
-
     if(NULL == launch || NULL == launch_updated || NULL == enclave_id)
         return SGX_ERROR_INVALID_PARAMETER;
 #ifndef SE_SIM

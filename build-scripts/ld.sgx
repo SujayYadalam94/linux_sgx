@@ -1,0 +1,41 @@
+#! /bin/bash
+
+# Paranoid check to make sure we don't reinvoke ourselves, effectively
+# making a fork()bomb
+if [ -n "$LD_SGX_RECURSION" ]; then
+    exit 99
+fi
+export LD_SGX_RECURSION=1
+
+echo "Hi from the new ld." 1>&2
+
+i=0
+while [ -n "$1" ]; do
+    arg="$1"
+    case "$arg" in
+        *)
+            args[$i]="$arg"
+            i=$[i+1]
+            ;;
+    esac
+    shift
+done
+
+# Try to figure out what's the underlying linker to invoke
+if [ -z "$LD" ]; then
+    for x in $(which -a ld); do
+	if [ "$x" != "$0" ]; then
+	    LD="$x"
+	    break
+	fi
+    done
+fi
+
+MB=$((1024*1024))
+HPAGE_SIZE=$((4*$MB)) 
+SLICE_SIZE=$HPAGE_SIZE
+
+HTLBOPTS="-zcommon-page-size=$SLICE_SIZE -zmax-page-size=$SLICE_SIZE"
+HTLBOPTS="$HTLBOPTS -T/home/sujay/Documents/linux-sgx/build-scripts/large_page.lds"
+
+${LD} "${args[@]}" ${HTLBOPTS}
