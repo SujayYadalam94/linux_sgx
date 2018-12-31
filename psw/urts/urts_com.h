@@ -383,7 +383,9 @@ static int __create_enclave(BinParser &parser,
             goto fail;
         }
     }
-        
+   
+	//YSSU: *IMPORTANT* need to comment this out or else its crashing
+/*     
     if(SGX_SUCCESS != (ret = loader.set_memory_protection(true)))
     {
         sgx_status_t status = SGX_SUCCESS;
@@ -391,7 +393,7 @@ static int __create_enclave(BinParser &parser,
         CEnclavePool::instance()->remove_enclave(loader.get_enclave_id(), status);
         goto fail;
     }
-
+*/
 
     if (ex_features & SGX_CREATE_ENCLAVE_EX_SWITCHLESS)
     {

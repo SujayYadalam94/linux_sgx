@@ -66,7 +66,7 @@
 #endif
 
 #define IS_PAGE_ALIGNED(x)	(!((size_t)(x)&(SE_PAGE_SIZE-1)))
-
+#define IS_LARGE_PAGE_ALIGNED(x) (!((size_t)(x)&(LARGE_PAGE_SIZE-1))) //YSSU
 #define MIN(x, y) (((x)>(y))?(y):(x))
 #define MAX(x, y) (((x)>(y))?(x):(y))
 #define ARRAY_LENGTH(x) (sizeof(x)/sizeof(x[0]))

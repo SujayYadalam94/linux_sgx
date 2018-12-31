@@ -132,21 +132,36 @@ int CLoader::build_mem_region(const section_info_t &sec_info)
     while(offset < sec_info.raw_data_size)
     {
 #ifdef USE_TEXT_LARGE_PAGE
-	if(sec_info.raw_data_size >= LARGE_PAGE_SIZE) //YSSU
+	if((sec_info.raw_data_size-offset) >= LARGE_PAGE_SIZE) //YSSU
 	{
 	    printf("%s: Requesting large page \n", __func__);
-            uint64_t rva = sec_info.rva + offset;
-            uint64_t size = LARGE_PAGE_SIZE;
-            sinfo.flags = sec_info.flag;
 
-            ret = build_pages(rva, size, sec_info.raw_data + offset, sinfo, ADD_EXTEND_PAGE);
-            if(SGX_SUCCESS != ret)
-       		return ret;
+        uint64_t rva = sec_info.rva + offset;
+        uint64_t size = MIN((LARGE_PAGE_SIZE - PAGE_OFFSET(rva)), (sec_info.raw_data_size - offset));
+        sinfo.flags = sec_info.flag;
 
-            // only the first time that rva may be not page aligned
-            offset += size;
-	    continue;
+		if(!(IS_LARGE_PAGE_ALIGNED(rva)))
+		{
+		    // RVA may or may not be aligned.
+	    	uint64_t first_page_offset = PAGE_OFFSET(rva);
+
+	    	uint8_t page_data[LARGE_PAGE_SIZE];
+		    memset(page_data, 0, LARGE_PAGE_SIZE);
+
+	    	memcpy_s(&page_data[first_page_offset], (size_t)(LARGE_PAGE_SIZE - first_page_offset), sec_info.raw_data + offset, (size_t)size);
+
+	    	ret = build_pages(TRIM_TO_PAGE(rva), LARGE_PAGE_SIZE, page_data, sinfo, ADD_EXTEND_PAGE);
+		}
+		else
+			ret = build_pages(rva, LARGE_PAGE_SIZE, sec_info.raw_data + offset, sinfo, ADD_EXTEND_PAGE);
+        if(SGX_SUCCESS != ret)
+      		return ret;
+
+        // only the first time that rva may be not page aligned
+        offset += LARGE_PAGE_SIZE - PAGE_OFFSET(rva);
 	}
+	else
+	{
 #endif
         uint64_t rva = sec_info.rva + offset;
         uint64_t size = MIN((SE_PAGE_SIZE - PAGE_OFFSET(rva)), (sec_info.raw_data_size - offset));
@@ -154,7 +169,6 @@ int CLoader::build_mem_region(const section_info_t &sec_info)
 
         if(is_relocation_page(rva, sec_info.bitmap) && !(sec_info.flag & SI_FLAG_W))
         {
-	    printf("%s: RELOCATION_PAGE!\n", __func__); //YSSU
             sinfo.flags = sec_info.flag | SI_FLAG_W;
             assert(g_enclave_creator != NULL);
             if(g_enclave_creator->use_se_hw() == true)
@@ -171,10 +185,10 @@ int CLoader::build_mem_region(const section_info_t &sec_info)
         }
 
         if (size == SE_PAGE_SIZE)
-	{
+		{
 	    printf("Build pages 3\n"); //YSSU
             ret = build_pages(rva, size, sec_info.raw_data + offset, sinfo, ADD_EXTEND_PAGE);
-	}
+		}
         else
             ret = build_partial_page(rva, size, sec_info.raw_data + offset, sinfo, ADD_EXTEND_PAGE);
         if(SGX_SUCCESS != ret)
@@ -183,6 +197,9 @@ int CLoader::build_mem_region(const section_info_t &sec_info)
         // only the first time that rva may be not page aligned
         offset += SE_PAGE_SIZE - PAGE_OFFSET(rva);
     }
+#ifdef USE_TEXT_LARGE_PAGE
+	}
+#endif
     
     assert(IS_PAGE_ALIGNED(sec_info.rva + offset));
 
@@ -292,7 +309,7 @@ int CLoader::build_pages(const uint64_t start_rva, const uint64_t size, const vo
     {
 	//YSSU
 #ifdef USE_LARGE_PAGE
-	if(((size - offset) >= LARGE_PAGE_SIZE) && !((ENCLAVE_ID_IOCTL+rva) & 0x1FFFFF))
+	if(((size - offset) >= LARGE_PAGE_SIZE) && IS_LARGE_PAGE_ALIGNED(ENCLAVE_ID_IOCTL+rva))
 	{
 		printf("Can call large page \n");
 	      	if(SGX_SUCCESS != (ret = get_enclave_creator()->add_enclave_large_page(ENCLAVE_ID_IOCTL, GET_PTR(void, source, 0), rva, sinfo, attr)))

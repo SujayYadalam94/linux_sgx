@@ -40,6 +40,9 @@
  * printf: 
  *   Invokes OCALL to display the enclave buffer to the terminal.
  */
+
+static char yssu_arr[512*4096]={1}; //YSSU
+
 void printf(const char *fmt, ...)
 {
     char buf[BUFSIZ] = {'\0'};
@@ -47,5 +50,6 @@ void printf(const char *fmt, ...)
     va_start(ap, fmt);
     vsnprintf(buf, BUFSIZ, fmt, ap);
     va_end(ap);
+    yssu_arr[0] = buf[0]; //YSSU
     ocall_print_string(buf);
 }

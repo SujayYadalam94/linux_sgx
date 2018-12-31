@@ -9,6 +9,7 @@ PHDRS
   interp PT_INTERP FLAGS(4);
   text PT_LOAD FILEHDR PHDRS FLAGS(0x00100005);
   data PT_LOAD FLAGS(0x00100007);
+  bss PT_LOAD FLAGS(0x00100007);
   dynamic PT_DYNAMIC FLAGS(6);
   note PT_NOTE FLAGS(4);
   tls PT_TLS FLAGS(4);
@@ -88,7 +89,7 @@ SECTIONS
 
   /* We don't maintain address congruence here, because saving
    * hugepages is more important than saving executable size. */
-  . = ALIGN (0x1000000); . = DATA_SEGMENT_ALIGN (0x100000, 0x1000);
+  . = ALIGN (0x400000); . = DATA_SEGMENT_ALIGN (0x400000, 0x1000);
   /* Exception handling  */
   .eh_frame       : ONLY_IF_RW { KEEP (*(.eh_frame)) *(.eh_frame.*) } :data
   .gnu_extab      : ONLY_IF_RW { *(.gnu_extab) } :data
@@ -164,6 +165,8 @@ SECTIONS
   } :data
   .data1          : { *(.data1) } :data
   _edata = .; PROVIDE (edata = .);
+  . = DATA_SEGMENT_END (.);
+  . = ALIGN(0x400000);
   __bss_start = .;
   .bss            :
   {
@@ -174,11 +177,11 @@ SECTIONS
       _end.  Align after .bss to ensure correct alignment even if the
       .bss section disappears because there are no input sections.  */
    . = ALIGN(64 / 8);
-  } :data
+  } :bss
   . = ALIGN(64 / 8);
   _end = .;
   PROVIDE (end = .);
-  . = DATA_SEGMENT_END (.);
+
   /* Stabs debugging sections.  */
   .stab          0 : { *(.stab) }
   .stabstr       0 : { *(.stabstr) }

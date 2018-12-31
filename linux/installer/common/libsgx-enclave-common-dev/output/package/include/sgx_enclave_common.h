@@ -82,6 +82,7 @@ typedef enum {
     ENCLAVE_PAGE_EXECUTE = 1 << 2,        /* Enables execute access to the committed region of pages. */
     ENCLAVE_PAGE_THREAD_CONTROL = 1 << 8, /* The page contains a thread control structure. */
     ENCLAVE_PAGE_UNVALIDATED = 1 << 12,   /* The page contents that you supply are excluded from measurement and content validation. */
+    ENCLAVE_PAGE_LARGE = 1 << 21, /*YSSU: Enum for requesting large pages */
 } enclave_page_properties_t;
 
 typedef enum {
