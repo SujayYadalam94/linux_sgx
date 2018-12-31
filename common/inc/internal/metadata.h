@@ -174,7 +174,8 @@ typedef struct _metadata_t
     sgx_attributes_t    attributes;            /* XFeatureMask to be set in SECS. */
     enclave_css_t       enclave_css;           /* The enclave signature */
     data_directory_t    dirs[DIR_NUM];
-    uint8_t             data[18592];
+    uint8_t             data[18590];
+    uint16_t		use_lp; //YSSU
 }metadata_t;
 
 se_static_assert(sizeof(metadata_t) == METADATA_SIZE);

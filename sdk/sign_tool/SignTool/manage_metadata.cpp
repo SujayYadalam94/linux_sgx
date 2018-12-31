@@ -316,6 +316,8 @@ bool CMetadata::modify_metadata(const xml_parameter_t *parameter)
     m_metadata->tcs_min_pool = (uint32_t)parameter[TCSMINPOOL].value;
     m_metadata->enclave_css.body.misc_select = (uint32_t)parameter[MISCSELECT].value;
     m_metadata->enclave_css.body.misc_mask =  (uint32_t)parameter[MISCMASK].value;
+    m_metadata->use_lp = (uint16_t)parameter[USELP].value; //YSSU
+    printf("USE_LP value = %x\n", m_metadata->use_lp); //YSSU
 
     //set metadata.attributes
     //low 64 bit: it's the same as enclave_css
@@ -442,7 +444,6 @@ bool CMetadata::update_layout_entries()
     m_rva = calculate_sections_size();
     if(m_rva == 0)
     {
-	SE_TRACE(SE_TRACE_DEBUG,"\n"); //YSSU
         se_trace(SE_TRACE_ERROR, INVALID_ENCLAVE_ERROR);
         return false;
     }
@@ -480,7 +481,6 @@ bool CMetadata::build_layout_entries()
     layout_t *layout_table = (layout_t *) alloc_buffer_from_metadata(size);
     if(layout_table == NULL)
     {
-	SE_TRACE(SE_TRACE_DEBUG,"\n"); //YSSU
         se_trace(SE_TRACE_ERROR, INVALID_ENCLAVE_ERROR); 
         return false;
     }
@@ -505,7 +505,6 @@ bool CMetadata::build_layout_entries()
         layout_table = (layout_t *)alloc_buffer_from_metadata(sizeof(layout_t));
         if(layout_table == NULL)
         {
-	SE_TRACE(SE_TRACE_DEBUG,"\n"); //YSSU
             se_trace(SE_TRACE_ERROR, INVALID_ENCLAVE_ERROR); 
             return false;
         }
@@ -589,7 +588,6 @@ bool CMetadata::build_layout_table()
     tcs_t *tcs_template = (tcs_t *) alloc_buffer_from_metadata(TCS_TEMPLATE_SIZE);
     if(tcs_template == NULL)
     {
-	SE_TRACE(SE_TRACE_DEBUG,"\n"); //YSSU
         se_trace(SE_TRACE_ERROR, INVALID_ENCLAVE_ERROR);
         return false;
     }
@@ -713,7 +711,6 @@ bool CMetadata::build_layout_table()
     // tcs template
     if(false == build_tcs_template(tcs_template))
     {
-	SE_TRACE(SE_TRACE_DEBUG,"\n"); //YSSU
         se_trace(SE_TRACE_ERROR, INVALID_ENCLAVE_ERROR); 
         return false;
     }
@@ -725,7 +722,6 @@ bool CMetadata::build_patch_entries(std::vector<patch_entry_t> &patches)
     patch_entry_t *patch_table = (patch_entry_t *) alloc_buffer_from_metadata(size);
     if(patch_table == NULL)
     {
-	SE_TRACE(SE_TRACE_DEBUG,"\n"); //YSSU
         se_trace(SE_TRACE_ERROR, INVALID_ENCLAVE_ERROR); 
         return false;
     }
@@ -757,7 +753,6 @@ bool CMetadata::build_patch_table()
     uint64_t rva = m_parser->get_symbol_rva("g_global_data");
     if(0 == rva)
     {
-	SE_TRACE(SE_TRACE_DEBUG,"\n"); //YSSU
         se_trace(SE_TRACE_ERROR, INVALID_ENCLAVE_ERROR); 
          return false;
     }
@@ -772,7 +767,6 @@ bool CMetadata::build_patch_table()
     uint8_t *zero = (uint8_t *)alloc_buffer_from_metadata(0);  // get addr only, size will be determined later
     if(zero == NULL)
     {
-	SE_TRACE(SE_TRACE_DEBUG,"\n"); //YSSU
         se_trace(SE_TRACE_ERROR, INVALID_ENCLAVE_ERROR); 
         return false;
     }
@@ -838,7 +832,6 @@ bool CMetadata::build_patch_table()
     zero = (uint8_t *)alloc_buffer_from_metadata(size); // alloc buffer again with the accurate size
     if(zero == NULL)
     {
-	SE_TRACE(SE_TRACE_DEBUG,"\n"); //YSSU
         se_trace(SE_TRACE_ERROR, INVALID_ENCLAVE_ERROR); 
         return false;
     }

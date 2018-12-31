@@ -66,7 +66,8 @@ typedef enum _para_type_t
     HEAPMINSIZE,
     HEAPINITSIZE,
     MISCSELECT,
-    MISCMASK
+    MISCMASK,
+	USELP, //YSSU
 } para_type_t;
 
 typedef struct _xml_parameter_t

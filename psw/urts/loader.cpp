@@ -54,6 +54,8 @@
 // enclave creator instance
 extern EnclaveCreator* g_enclave_creator;
 
+uint16_t use_lp=0; //YSSU
+
 EnclaveCreator* get_enclave_creator(void)
 {
     return g_enclave_creator;
@@ -118,7 +120,7 @@ bool CLoader::is_relocation_page(const uint64_t rva, std::vector<uint8_t> *bitma
     return false;
 }
 
-int CLoader::build_mem_region(const section_info_t &sec_info)
+int CLoader::build_mem_region(const section_info_t &sec_info, uint8_t section_no) //YSSU
 {
     int ret = SGX_SUCCESS;
     uint64_t offset = 0;
@@ -132,7 +134,7 @@ int CLoader::build_mem_region(const section_info_t &sec_info)
     while(offset < sec_info.raw_data_size)
     {
 #ifdef USE_TEXT_LARGE_PAGE
-	if((sec_info.raw_data_size-offset) >= LARGE_PAGE_SIZE) //YSSU
+	if((sec_info.raw_data_size-offset) >= LARGE_PAGE_SIZE && (use_lp & (1<<section_no))) //YSSU
 	{
 	    printf("%s: Requesting large page \n", __func__);
 
@@ -211,13 +213,11 @@ int CLoader::build_mem_region(const section_info_t &sec_info)
     {
         uint64_t rva = sec_info.rva + offset;
         size_t size = (size_t)(ROUND_TO_PAGE(sec_info.virtual_size - offset));
-
         sinfo.flags = sec_info.flag;
-	    printf("Build pages 4\n"); //YSSU
-        if(SGX_SUCCESS != (ret = build_pages(rva, size, 0, sinfo, ADD_EXTEND_PAGE)))
-            return ret;
-    }
 
+	if(SGX_SUCCESS != (ret = build_pages(rva, size, 0, sinfo, ADD_EXTEND_PAGE)))
+	    return ret;
+    }
     return SGX_SUCCESS;
 }
 
@@ -253,7 +253,7 @@ int CLoader::build_sections(std::vector<uint8_t> *bitmap)
 
         section_info_t sec_info = { sections[i]->raw_data(), sections[i]->raw_data_size(), sections[i]->get_rva(), sections[i]->virtual_size(), sections[i]->get_si_flags(), bitmap };
 
-        if(SGX_SUCCESS != (ret = build_mem_region(sec_info)))
+        if(SGX_SUCCESS != (ret = build_mem_region(sec_info,(uint8_t)i))) //YSSU
             return ret;
     }
     
@@ -435,7 +435,7 @@ int CLoader::build_context(const uint64_t start_rva, layout_entry_t *layout)
             {   
                            
                 section_info_t sec_info = {GET_PTR(uint8_t, m_metadata, layout->content_offset), layout->content_size, rva, ((uint64_t)layout->page_count) << SE_PAGE_SHIFT, layout->si_flags, NULL};
-                if(SGX_SUCCESS != (ret = build_mem_region(sec_info)))
+                if(SGX_SUCCESS != (ret = build_mem_region(sec_info,4))) //YSSU:Only 3 sections
                 {
                     return ret;
                 }
@@ -775,6 +775,8 @@ int CLoader::load_enclave(SGXLaunchToken *lc, int debug, const metadata_t *metad
         SE_TRACE(SE_TRACE_ERROR, "The metadata setting is not correct\n");
         return ret;
     }
+	use_lp = metadata->use_lp; //YSSU
+	printf("use_lp=%x\n", use_lp); //YSSU
 
     ret = get_enclave_creator()->get_misc_attr(&sgx_misc_attr, const_cast<metadata_t *>(m_metadata), lc, debug);
     if(SGX_SUCCESS != ret)

@@ -1028,7 +1028,8 @@ int main(int argc, char* argv[])
                                    {"HeapMinSize",0x1FFFFFFFFF,0,HEAP_SIZE_MIN,0},
                                    {"HeapInitSize",0x1FFFFFFFFF,0,HEAP_SIZE_MIN,0},
                                    {"MiscSelect", 0xFFFFFFFF, 0, DEFAULT_MISC_SELECT, 0},
-                                   {"MiscMask", 0xFFFFFFFF, 0, DEFAULT_MISC_MASK, 0}};
+                                   {"MiscMask", 0xFFFFFFFF, 0, DEFAULT_MISC_MASK, 0},
+								   {"UseLP", 0xF, 0, 0, 0}}; //YSSU
 
     const char *path[8] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
     uint8_t enclave_hash[SGX_HASH_SIZE] = {0};
