@@ -37,6 +37,8 @@
 #include <vector>
 #include <tuple>
 
+extern uint16_t use_lp; //YSSU
+
 namespace {
 /** the callback function to filter a section.
  *
@@ -598,69 +600,41 @@ sgx_status_t ElfParser::run_parser()
     /* We only need to run the parser once. */
     if (m_sections.size() != 0) return SGX_SUCCESS;
 
-	printf("1\n"); //YSSU
     const ElfW(Ehdr) *elf_hdr = (const ElfW(Ehdr) *)m_start_addr;
     if (elf_hdr == NULL || m_len < sizeof(ElfW(Ehdr)))
-{
-	printf("2\n"); //YSSU
         return SGX_ERROR_INVALID_ENCLAVE;
-}
 
     /* Check elf header*/
     if (!validate_elf_header(elf_hdr))
-{
-	printf("3\n"); //YSSU
         return SGX_ERROR_INVALID_ENCLAVE;
-}
     /* Get and check machine mode */
     if (!get_bin_fmt(elf_hdr, m_bin_fmt))
-{
-	printf("4\n"); //YSSU
 	return SGX_ERROR_MODE_INCOMPATIBLE;
-}
     /* Check if there is any overlap segment, and make sure the segment is 1 page aligned;
     * TLS segment must exist.
     */
     if (!validate_segment(elf_hdr, m_len))
-    {	
-	printf("5\n"); //YSSU
         return SGX_ERROR_INVALID_ENCLAVE;
-    }
 
     if (!parse_dyn(elf_hdr, &m_dyn_info[0]))
-{
-	printf("6\n"); //YSSU
         return SGX_ERROR_INVALID_ENCLAVE;
-}
     /* Check if there is any undefined symbol */
     if (!check_symbol_table(elf_hdr, m_dyn_info, m_sym_table))
-{
-	printf("7\n"); //YSSU
         return SGX_ERROR_UNDEFINED_SYMBOL;
-}
 
     /* Check if there is unexpected relocation type */
     if (!validate_reltabs(elf_hdr, m_dyn_info))
-{
-	printf("8\n"); //YSSU
         return SGX_ERROR_INVALID_ENCLAVE;
-}
 
     /* Check if there is .ctor section */
     if (has_ctor_section(elf_hdr))
-{
-	printf("9\n"); //YSSU
        return SGX_ERROR_INVALID_ENCLAVE;
-}
 
     /* build regular sections */
     if (build_regular_sections(m_start_addr, m_sections, m_tls_section, m_metadata_offset, m_metadata_block_size))
         return SGX_SUCCESS;
     else
-{
-	printf("01\n"); //YSSU
         return SGX_ERROR_INVALID_ENCLAVE;
-}
 }
 
 ElfParser::~ElfParser()
@@ -942,7 +916,14 @@ bool ElfParser::set_memory_protection(uint64_t enclave_base_addr, bool is_after_
         }
         rva = TRIM_TO_PAGE(sections[i]->get_rva()) + enclave_base_addr;
         prot = (int)(sections[i]->get_si_flags()&SI_MASK_MEM_ATTRIBUTE);
-        ret = mprotect((void*)rva, (size_t)len, prot);
+	if(use_lp & (1<<i)) //YSSU
+	{
+	    printf("MProtecting large pages\n");
+	    ret = mprotect((void*)rva, LARGE_PAGE_SIZE, prot);
+	    len = LARGE_PAGE_SIZE;
+	}
+	else
+	    ret = mprotect((void*)rva, (size_t)len, prot);
         if(ret != 0)
         {
             return false;

@@ -178,7 +178,7 @@ SECTIONS
       .bss section disappears because there are no input sections.  */
    . = ALIGN(64 / 8);
   } :bss
-  . = ALIGN(64 / 8);
+  . = ALIGN(0x400000);
   _end = .;
   PROVIDE (end = .);
 

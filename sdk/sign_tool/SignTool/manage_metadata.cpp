@@ -455,7 +455,7 @@ bool CMetadata::update_layout_entries()
 	    if(m_layouts[i].entry.id == LAYOUT_ID_HEAP_MIN) //heap
 	    {
 		//YSSU: Modifying the heap start address to align with large page
-		m_rva += (0x200000 - 1);
+		m_rva += (0x400000 - 1);
 		m_rva &= ~0x1FFFFF;
 		m_rva -= 0x1000; //Accomodating first heap page
 	    }

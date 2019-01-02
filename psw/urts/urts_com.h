@@ -65,6 +65,7 @@
 extern "C" int __itt_init_ittlib(const char*, __itt_group_id);
 extern "C" __itt_global* __itt_get_ittapi_global();
 
+uint16_t _use_lp; //YSSU
 
 #define HSW_C0  0x306c3
 #define GPR_A0  0x406e0
@@ -121,6 +122,12 @@ static sgx_status_t get_metadata(BinParser *parser, const int debug, metadata_t 
 
     //scan multiple metadata list in sgx_metadata section
     meta_rva = parser->get_metadata_offset();
+    //YSSU: Not very confident of this.. need to check
+    *metadata = GET_PTR(metadata_t, base_addr, meta_rva);
+    if(*metadata != NULL)
+    {
+	_use_lp = (*metadata)->use_lp;
+    }
     do {
         *metadata = GET_PTR(metadata_t, base_addr, meta_rva);
         if(*metadata == NULL)
@@ -156,6 +163,7 @@ static sgx_status_t get_metadata(BinParser *parser, const int debug, metadata_t 
     else
     {
         *metadata = target_metadata;
+	(*metadata)->use_lp = _use_lp; //YSSU
     }
 
     return (sgx_status_t)get_enclave_creator()->get_misc_attr(sgx_misc_attr, *metadata, NULL, debug);

@@ -3818,7 +3818,7 @@ conftest.c:40:12: warning: implicit declaration of function '__builtin_stack_poi
  void *sp = __builtin_stack_pointer()
             ^
 conftest.c:40:12: warning: initialization makes pointer from integer without a cast [-Wint-conversion]
-/tmp/ccB4eKiR.o: In function `main':
+/tmp/ccF96JV4.o: In function `main':
 /home/sujay/Documents/linux-sgx/sdk/gperftools/gperftools-2.5/conftest.c:40: undefined reference to `__builtin_stack_pointer'
 collect2: error: ld returned 1 exit status
 configure:18705: $? = 1

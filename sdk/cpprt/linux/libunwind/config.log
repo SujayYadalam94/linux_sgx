@@ -523,7 +523,7 @@ configure: failed program was:
 configure:16495: result: no
 configure:16507: checking for library containing dlopen
 configure:16538: gcc -o conftest -DHAVE_SGX=1 -DUNW_LOCAL_ONLY -fno-builtin -fPIC -std=c99    conftest.c  >&5
-/tmp/ccrZldTY.o: In function `main':
+/tmp/cc0bUhi4.o: In function `main':
 conftest.c:(.text+0xa): undefined reference to `dlopen'
 collect2: error: ld returned 1 exit status
 configure:16538: $? = 1
@@ -1720,7 +1720,7 @@ configure:17286: $? = 0
 configure:17286: result: yes
 configure:17286: checking for dl_phdr_removals_counter
 configure:17286: gcc -o conftest -DHAVE_SGX=1 -DUNW_LOCAL_ONLY -fno-builtin -fPIC -std=c99   -D_GNU_SOURCE  conftest.c  >&5
-/tmp/cc13T0wS.o: In function `main':
+/tmp/ccEsfHjY.o: In function `main':
 conftest.c:(.text+0xa): undefined reference to `dl_phdr_removals_counter'
 collect2: error: ld returned 1 exit status
 configure:17286: $? = 1
@@ -1817,7 +1817,7 @@ configure: failed program was:
 configure:17286: result: no
 configure:17286: checking for dlmodinfo
 configure:17286: gcc -o conftest -DHAVE_SGX=1 -DUNW_LOCAL_ONLY -fno-builtin -fPIC -std=c99   -D_GNU_SOURCE  conftest.c  >&5
-/tmp/ccCTxEsU.o: In function `main':
+/tmp/ccwZQpd0.o: In function `main':
 conftest.c:(.text+0xa): undefined reference to `dlmodinfo'
 collect2: error: ld returned 1 exit status
 configure:17286: $? = 1
@@ -1914,7 +1914,7 @@ configure: failed program was:
 configure:17286: result: no
 configure:17286: checking for getunwind
 configure:17286: gcc -o conftest -DHAVE_SGX=1 -DUNW_LOCAL_ONLY -fno-builtin -fPIC -std=c99   -D_GNU_SOURCE  conftest.c  >&5
-/tmp/ccNkINUW.o: In function `main':
+/tmp/cckNJwFZ.o: In function `main':
 conftest.c:(.text+0xa): undefined reference to `getunwind'
 collect2: error: ld returned 1 exit status
 configure:17286: $? = 1
@@ -2011,7 +2011,7 @@ configure: failed program was:
 configure:17286: result: no
 configure:17286: checking for ttrace
 configure:17286: gcc -o conftest -DHAVE_SGX=1 -DUNW_LOCAL_ONLY -fno-builtin -fPIC -std=c99   -D_GNU_SOURCE  conftest.c  >&5
-/tmp/cclbfR70.o: In function `main':
+/tmp/ccSZwVr2.o: In function `main':
 conftest.c:(.text+0xa): undefined reference to `ttrace'
 collect2: error: ld returned 1 exit status
 configure:17286: $? = 1

@@ -120,7 +120,8 @@ bool CLoader::is_relocation_page(const uint64_t rva, std::vector<uint8_t> *bitma
     return false;
 }
 
-int CLoader::build_mem_region(const section_info_t &sec_info, uint8_t section_no) //YSSU
+//YSSU: new function added
+int CLoader::build_large_mem_region(const section_info_t &sec_info)
 {
     int ret = SGX_SUCCESS;
     uint64_t offset = 0;
@@ -133,9 +134,6 @@ int CLoader::build_mem_region(const section_info_t &sec_info, uint8_t section_no
     // which case the page needs to be marked writable.
     while(offset < sec_info.raw_data_size)
     {
-#ifdef USE_TEXT_LARGE_PAGE
-	if((sec_info.raw_data_size-offset) >= LARGE_PAGE_SIZE && (use_lp & (1<<section_no))) //YSSU
-	{
 	    printf("%s: Requesting large page \n", __func__);
 
         uint64_t rva = sec_info.rva + offset;
@@ -154,17 +152,60 @@ int CLoader::build_mem_region(const section_info_t &sec_info, uint8_t section_no
 
 	    	ret = build_pages(TRIM_TO_PAGE(rva), LARGE_PAGE_SIZE, page_data, sinfo, ADD_EXTEND_PAGE);
 		}
+		else if(size < LARGE_PAGE_SIZE)
+		{
+			uint8_t page_data[LARGE_PAGE_SIZE];
+			memset(page_data, 0, LARGE_PAGE_SIZE);
+
+			memcpy_s(&page_data, (size_t)(LARGE_PAGE_SIZE), sec_info.raw_data + offset, (size_t)size);
+			ret = build_pages(rva, LARGE_PAGE_SIZE, page_data, sinfo, ADD_EXTEND_PAGE);
+		}
 		else
 			ret = build_pages(rva, LARGE_PAGE_SIZE, sec_info.raw_data + offset, sinfo, ADD_EXTEND_PAGE);
         if(SGX_SUCCESS != ret)
       		return ret;
 
-        // only the first time that rva may be not page aligned
-        offset += LARGE_PAGE_SIZE - PAGE_OFFSET(rva);
+        offset += size;
 	}
-	else
+  
+	//YSSU: Commenting this out because BSS is now a different section  
+//    assert(IS_PAGE_ALIGNED(sec_info.rva + offset));
+
+    // Add any remaining uninitialized data.  We can call build_pages directly
+    // even if there are partial pages since the source is null, i.e. everything
+    // is filled with '0'.  Uninitialied data cannot be a relocation table, ergo
+    // there is no need to check the relocation bitmap.
+    if(sec_info.virtual_size > offset)
+    {
+	uint32_t i;
+        uint64_t rva = sec_info.rva + offset;
+        size_t size = (size_t)(ROUND_TO((sec_info.virtual_size - offset),LARGE_PAGE_SIZE));
+        sinfo.flags = sec_info.flag;
+
+	for(i=0; i < (size/LARGE_PAGE_SIZE); i++)
 	{
-#endif
+  	    if(SGX_SUCCESS != (ret = build_pages(rva, LARGE_PAGE_SIZE, 0, sinfo, ADD_EXTEND_PAGE)))
+	   	return ret;
+	    rva += LARGE_PAGE_SIZE;
+	}	
+    }
+
+    return SGX_SUCCESS;
+}
+
+int CLoader::build_mem_region(const section_info_t &sec_info) //YSSU
+{
+    int ret = SGX_SUCCESS;
+    uint64_t offset = 0;
+    sec_info_t sinfo;
+    memset(&sinfo, 0, sizeof(sinfo));
+
+    printf("%s: addr=0x%lx  raw_data_size=%lu\n", __func__, sec_info.rva, sec_info.raw_data_size); //YSSU
+    // Build pages of the section that are contain initialized data.  Each page
+    // needs to be added individually as the page may hold relocation data, in
+    // which case the page needs to be marked writable.
+    while(offset < sec_info.raw_data_size)
+    {
         uint64_t rva = sec_info.rva + offset;
         uint64_t size = MIN((SE_PAGE_SIZE - PAGE_OFFSET(rva)), (sec_info.raw_data_size - offset));
         sinfo.flags = sec_info.flag;
@@ -199,10 +240,7 @@ int CLoader::build_mem_region(const section_info_t &sec_info, uint8_t section_no
         // only the first time that rva may be not page aligned
         offset += SE_PAGE_SIZE - PAGE_OFFSET(rva);
     }
-#ifdef USE_TEXT_LARGE_PAGE
-	}
-#endif
-    
+   
     assert(IS_PAGE_ALIGNED(sec_info.rva + offset));
 
     // Add any remaining uninitialized data.  We can call build_pages directly
@@ -218,6 +256,7 @@ int CLoader::build_mem_region(const section_info_t &sec_info, uint8_t section_no
 	if(SGX_SUCCESS != (ret = build_pages(rva, size, 0, sinfo, ADD_EXTEND_PAGE)))
 	    return ret;
     }
+
     return SGX_SUCCESS;
 }
 
@@ -253,8 +292,17 @@ int CLoader::build_sections(std::vector<uint8_t> *bitmap)
 
         section_info_t sec_info = { sections[i]->raw_data(), sections[i]->raw_data_size(), sections[i]->get_rva(), sections[i]->virtual_size(), sections[i]->get_si_flags(), bitmap };
 
-        if(SGX_SUCCESS != (ret = build_mem_region(sec_info,(uint8_t)i))) //YSSU
-            return ret;
+	//YSSU
+	if(use_lp & (1<<i))
+	{
+            if(SGX_SUCCESS != (ret = build_large_mem_region(sec_info))) //YSSU
+    	        return ret;
+	}
+ 	    else
+	{
+            if(SGX_SUCCESS != (ret = build_mem_region(sec_info))) //YSSU
+		return ret;
+	}			
     }
     
     
@@ -309,7 +357,7 @@ int CLoader::build_pages(const uint64_t start_rva, const uint64_t size, const vo
     {
 	//YSSU
 #ifdef USE_LARGE_PAGE
-	if(((size - offset) >= LARGE_PAGE_SIZE) && IS_LARGE_PAGE_ALIGNED(ENCLAVE_ID_IOCTL+rva))
+	if(((size - offset) >= LARGE_PAGE_SIZE) && IS_LARGE_PAGE_ALIGNED(ENCLAVE_ID_IOCTL+rva) && (use_lp & 8))
 	{
 		printf("Can call large page \n");
 	      	if(SGX_SUCCESS != (ret = get_enclave_creator()->add_enclave_large_page(ENCLAVE_ID_IOCTL, GET_PTR(void, source, 0), rva, sinfo, attr)))
@@ -435,7 +483,7 @@ int CLoader::build_context(const uint64_t start_rva, layout_entry_t *layout)
             {   
                            
                 section_info_t sec_info = {GET_PTR(uint8_t, m_metadata, layout->content_offset), layout->content_size, rva, ((uint64_t)layout->page_count) << SE_PAGE_SHIFT, layout->si_flags, NULL};
-                if(SGX_SUCCESS != (ret = build_mem_region(sec_info,4))) //YSSU:Only 3 sections
+                if(SGX_SUCCESS != (ret = build_mem_region(sec_info))) //YSSU:Only 3 sections
                 {
                     return ret;
                 }
@@ -580,6 +628,8 @@ int CLoader::build_image(SGXLaunchToken * const lc, sgx_attributes_t * const sec
     }
 
     return SGX_SUCCESS;
+
+    use_lp = 0; //YSSU
 
 fail:
     get_enclave_creator()->destroy_enclave(ENCLAVE_ID_IOCTL, m_secs.size);
@@ -907,6 +957,7 @@ int CLoader::set_context_protection(layout_t *layout_start, layout_t *layout_end
             ret = mprotect(GET_PTR(void, m_start_addr, layout->entry.rva + delta), 
                                (size_t)layout->entry.page_count << SE_PAGE_SHIFT,
                                prot); 
+		ret =0;
             if(ret != 0)
             {
                 SE_TRACE(SE_TRACE_WARNING, "mprotect(rva=%" PRIu64 ", len=%" PRIu64 ", flags=%d) failed\n",

@@ -41,7 +41,7 @@
  *   Invokes OCALL to display the enclave buffer to the terminal.
  */
 
-static char yssu_arr[412*4096]={0}; //YSSU
+static char yssu_arr[412*4096]={1}; //YSSU
 
 void printf(const char *fmt, ...)
 {
