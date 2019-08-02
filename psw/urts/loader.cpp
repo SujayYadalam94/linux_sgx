@@ -229,7 +229,7 @@ int CLoader::build_mem_region(const section_info_t &sec_info) //YSSU
 
         if (size == SE_PAGE_SIZE)
 		{
-	    printf("Build pages 3\n"); //YSSU
+	    //printf("Build pages 3\n"); //YSSU
             ret = build_pages(rva, size, sec_info.raw_data + offset, sinfo, ADD_EXTEND_PAGE);
 		}
         else
@@ -279,7 +279,7 @@ int CLoader::build_sections(std::vector<uint8_t> *bitmap)
             memset(&sinfo, 0, sizeof(sinfo));
             sinfo.flags = last_section->get_si_flags();
             uint64_t rva = ROUND_TO_PAGE(last_section->get_rva() + last_section->virtual_size());
-	    printf("Build pages 1\n"); //YSSU
+	    //printf("Build pages 1\n"); //YSSU
             if(SGX_SUCCESS != (ret = build_pages(rva, size, 0, sinfo, ADD_EXTEND_PAGE)))
                 return ret;
         }
@@ -316,7 +316,7 @@ int CLoader::build_sections(std::vector<uint8_t> *bitmap)
         memset(&sinfo, 0, sizeof(sinfo));
         sinfo.flags = last_section->get_si_flags();
         uint64_t rva = ROUND_TO_PAGE(last_section->get_rva() + last_section->virtual_size());
-	printf("Build pages 2\n"); //YSSU
+		//printf("Build pages 2\n"); //YSSU
         if(SGX_SUCCESS != (ret = build_pages(rva, size, 0, sinfo, ADD_EXTEND_PAGE)))
             return ret;
     }
