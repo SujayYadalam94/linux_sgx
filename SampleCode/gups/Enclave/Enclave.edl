@@ -1,0 +1,14 @@
+enclave {
+
+	include "user_types.h"	
+	
+    trusted {
+        /* define ECALLs here. */
+		public int ecall_gups_loop(int nlocal, int chunk, u64Int offset, int nprocs, int logprocs, int niterate, int me, int logtablelocal, [in, out] int *maxndata, [in, out] int *maxnfinal, [in, out] int *nexcess, [in, out] int *nbad);
+    };
+
+    untrusted {
+        /* define OCALLs here. */
+        void ocall_print([in, string]const char* str);
+    };
+};
