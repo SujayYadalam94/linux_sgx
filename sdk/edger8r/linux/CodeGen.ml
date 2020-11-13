@@ -1513,6 +1513,7 @@ let gen_trusted_source (ec: enclave_content) =
 #include \"sgx_trts.h\" /* for sgx_ocalloc, sgx_is_outside_enclave */\n\
 #include \"sgx_lfence.h\" /* for sgx_lfence */\n\n\
 #include <errno.h>\n\
+//Comment (using C semantics) the below line if using Porpoise
 #include <mbusafecrt.h> /* for memcpy_s etc */\n\
 #include <stdlib.h> /* for malloc/free etc */\n\
 \n\

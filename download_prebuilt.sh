@@ -42,21 +42,21 @@ server_ae_url=$server_url_path/$ae_file_name
 server_checksum_url=$server_url_path/$checksum_file
 
 rm -f $out_dir/$optlib_name
-wget $server_optlib_url -P $out_dir
+wget $server_optlib_url -P $out_dir --no-check-certificate
 if [ $? -ne 0 ]; then
     echo "Fail to download file $server_optlib_url"
     exit -1
 fi
 
 rm -f $out_dir/$ae_file_name
-wget $server_ae_url -P $out_dir
+wget $server_ae_url -P $out_dir --no-check-certificate
 if [ $? -ne 0 ]; then
     echo "Fail to download file $server_ae_url"
     exit -1
 fi
 
 rm -f $out_dir/$checksum_file
-wget $server_checksum_url -P $out_dir
+wget $server_checksum_url -P $out_dir --no-check-certificate
 if [ $? -ne 0 ]; then
     echo "Fail to download file $server_checksum_url"
     exit -1

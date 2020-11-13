@@ -43,23 +43,19 @@ CPPFLAGS += -I.                          \
             -I$(LINUX_SDK_DIR)/trts      \
             -I./gdtoa
 
-#ifneq ($(USE_OPT_LIBS), 0)
-#CFLAGS += -D_TLIBC_USE_INTEL_FAST_STRING_
-#CXXFLAGS += -D_TLIBC_USE_INTEL_FAST_STRING_
-#LIBC_C_SRCS := $(wildcard gen/*.c gdtoa/*.c locale/*.c math/*.c stdlib/*.c string/*.c stdio/*.c time/*.c) 
-#else
-#LIBC_C_SRCS := $(wildcard gen/*.c gdtoa/*.c locale/*.c stdlib/*.c string/*.c stdio/*.c time/*.c)
-#endif
-
 ifneq ($(USE_OPT_LIBS), 0)
 CFLAGS += -D_TLIBC_USE_INTEL_FAST_STRING_
 CXXFLAGS += -D_TLIBC_USE_INTEL_FAST_STRING_
-LIBC_C_SRCS := gen/spinlock.c gen/errno.c gen/sbrk.c string/memset_s.c string/se_string_init.c
+LIBC_C_SRCS := $(wildcard gen/*.c gdtoa/*.c locale/*.c math/*.c stdlib/*.c string/*.c stdio/*.c time/*.c)
+# Uncomment below line and comment above if running applications with Porpoise
+#LIBC_C_SRCS := gen/spinlock.c gen/errno.c gen/sbrk.c string/memset_s.c string/se_string_init.c \
+				gen/assert.c gen/sbrk.c stdlib/malloc.c
 else
-LIBC_C_SRCS := gen/spinlock.c gen/errno.c gen/sbrk.c string/memset_s.c string/se_string_init.c
+LIBC_C_SRCS := $(wildcard gen/*.c gdtoa/*.c locale/*.c stdlib/*.c string/*.c stdio/*.c time/*.c)
+# Uncomment below line and comment above if running applications with Porpoise
+#LIBC_C_SRCS := gen/spinlock.c gen/errno.c gen/sbrk.c string/memset_s.c string/se_string_init.c \
+				gen/assert.c gen/sbrk.c stdlib/malloc.c
 endif
-
-LIBC_C_SRCS += gen/assert.c gen/sbrk.c stdlib/malloc.c
 
 LIBC_CPP_SRCS := $(wildcard gen/*.cpp) tstdc_version.cpp
 LIBC_ASM_SRCS := $(wildcard gen/*.S)
