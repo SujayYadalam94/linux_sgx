@@ -9,5 +9,5 @@
   <DisableDebug>0</DisableDebug>
   <MiscSelect>0</MiscSelect>
   <MiscMask>0xFFFFFFFF</MiscMask>
-  <UseLP>0xE</UseLP>
+  <UseLP>0x0</UseLP>
 </EnclaveConfiguration>
