@@ -425,9 +425,9 @@ bool validate_segment(const ElfW(Ehdr) *elf_hdr, uint64_t len)
         /* Validate the size of the buffer */
         //if (len < (uint64_t)prg_hdr->p_offset + prg_hdr->p_filesz) //YSSU
         if (prg_hdr->p_filesz != 0 && len < (uint64_t)prg_hdr->p_offset + prg_hdr->p_filesz) //YSSU
-	{
-                return false;
-	}
+        {
+            return false;
+        }
 
         if (PT_LOAD == prg_hdr->p_type)
         {
@@ -609,7 +609,7 @@ sgx_status_t ElfParser::run_parser()
         return SGX_ERROR_INVALID_ENCLAVE;
     /* Get and check machine mode */
     if (!get_bin_fmt(elf_hdr, m_bin_fmt))
-	return SGX_ERROR_MODE_INCOMPATIBLE;
+    return SGX_ERROR_MODE_INCOMPATIBLE;
     /* Check if there is any overlap segment, and make sure the segment is 1 page aligned;
     * TLS segment must exist.
     */
@@ -916,14 +916,13 @@ bool ElfParser::set_memory_protection(uint64_t enclave_base_addr, bool is_after_
         }
         rva = TRIM_TO_PAGE(sections[i]->get_rva()) + enclave_base_addr;
         prot = (int)(sections[i]->get_si_flags()&SI_MASK_MEM_ATTRIBUTE);
-	if(use_lp & (1<<i)) //YSSU
-	{
-	    printf("MProtecting large pages\n");
-	    ret = mprotect((void*)rva, LARGE_PAGE_SIZE, prot);
-	    len = LARGE_PAGE_SIZE;
-	}
-	else
-	    ret = mprotect((void*)rva, (size_t)len, prot);
+        if(use_lp & (1<<i)) //YSSU
+        {
+            ret = mprotect((void*)rva, LARGE_PAGE_SIZE, prot);
+            len = LARGE_PAGE_SIZE;
+        }
+        else
+            ret = mprotect((void*)rva, (size_t)len, prot);
         if(ret != 0)
         {
             return false;

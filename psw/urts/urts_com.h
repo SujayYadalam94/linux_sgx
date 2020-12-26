@@ -122,7 +122,7 @@ static sgx_status_t get_metadata(BinParser *parser, const int debug, metadata_t 
 
     //scan multiple metadata list in sgx_metadata section
     meta_rva = parser->get_metadata_offset();
-    //YSSU: Not very confident of this.. need to check
+    // TODO: It works but need to verify if this is correct
     *metadata = GET_PTR(metadata_t, base_addr, meta_rva);
     if(*metadata != NULL)
     {
@@ -163,7 +163,7 @@ static sgx_status_t get_metadata(BinParser *parser, const int debug, metadata_t 
     else
     {
         *metadata = target_metadata;
-	(*metadata)->use_lp = _use_lp; //YSSU
+        (*metadata)->use_lp = _use_lp; //YSSU
     }
 
     return (sgx_status_t)get_enclave_creator()->get_misc_attr(sgx_misc_attr, *metadata, NULL, debug);
@@ -293,8 +293,8 @@ static int __create_enclave(BinParser &parser,
 
         bool is_SGX_DBG_OPTIN_set = false;
         is_SGX_DBG_OPTIN_set = is_SGX_DBG_OPTIN_variable_set(); //YSSU
-	is_SGX_DBG_OPTIN_set = true; //YSSU: debug option
-	SE_TRACE(SE_TRACE_DEBUG, "Debug OPTIN set\n"); //YSSU
+        is_SGX_DBG_OPTIN_set = true; //YSSU: debug option
+        SE_TRACE(SE_TRACE_DEBUG, "Debug OPTIN set\n"); //YSSU
         if (isVTuneProfiling || is_SGX_DBG_OPTIN_set)
         {
             SE_TRACE(SE_TRACE_DEBUG, "VTune is profiling or SGX_DBG_OPTIN is set\n");
@@ -392,17 +392,6 @@ static int __create_enclave(BinParser &parser,
         }
     }
    
-	//YSSU: *IMPORTANT* need to comment this out or else its crashing
-/*     
-    if(SGX_SUCCESS != (ret = loader.set_memory_protection(true)))
-    {
-        sgx_status_t status = SGX_SUCCESS;
-        generate_enclave_debug_event(URTS_EXCEPTION_PREREMOVEENCLAVE, debug_info);
-        CEnclavePool::instance()->remove_enclave(loader.get_enclave_id(), status);
-        goto fail;
-    }
-*/
-
     if (ex_features & SGX_CREATE_ENCLAVE_EX_SWITCHLESS)
     {
         if ((ex_features_p == NULL) || (ex_features_p[SGX_CREATE_ENCLAVE_EX_SWITCHLESS_BIT_IDX] == NULL))
